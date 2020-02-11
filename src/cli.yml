@@ -1,0 +1,20 @@
+name: wiki
+version: "0.1.0"
+author: Aubrey Landau <aubreylandau@gmail.com>
+about: a Wikipedia article finder, written in Rust
+args:
+  - query:
+      required: true
+      takes_value: true
+      index: 2
+      help: the topic you want wikipedia to fetch an article on
+  - similar:
+      required_unless: get
+      index: 1
+      short: s
+      help: list pages with a similar name
+  - get:
+      required_unless: pages
+      index: 1
+      short: g
+      help: get a page with a known name

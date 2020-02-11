@@ -1,16 +1,10 @@
+#[macro_use]
 extern crate clap;
-use clap::{Arg, App};
+use clap::App;
 
 fn main() {
-    let matches = App::new("wiki")
-        .version("0.1.0")
-        .author("Aubrey Landau <aubreylandau@gmail.com>")
-        .about("get a wikipedia page")
-        .arg(Arg::with_name("query")
-            .required(true)
-            .takes_value(true)
-            .index(1)
-            .help("the article you want to find on wikipedia"))
-        .get_matches();
+    let yaml = load_yaml!("cli.yml");
+    let app: App = App::from_yaml(yaml);
+    let matches = app.get_matches();
     let query: &str = matches.value_of("query").unwrap();
 }
