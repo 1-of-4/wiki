@@ -1,3 +1,8 @@
+use std::env::args;
+use roogle::util::parse_args;
+
 fn main() {
-    println!("Hello, world!");
+    let args: Vec<String> = args().collect();
+    println!("{:?}", args);
+    let query: String = parse_args(args);
 }
