@@ -19,6 +19,14 @@ pub mod interface {
     }
 
     impl Request {
+        pub fn new(query: Query, keywords_: &str) -> Request {
+            let keywords: String = String::from(keywords_);
+            Request {
+                query,
+                keywords,
+            }
+        }
+
         fn url(&self) -> String {
             match &self.query {
                 Query::Search => format!(
@@ -54,7 +62,18 @@ pub mod interface {
             .collect(); //todo: optimize this, jesus fuck
     }
 
-    pub fn fetch_contents() {
+    pub fn fetch_contents(request: Request) -> Option<String> {
         unimplemented!()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::interface::*;
+
+    #[test]
+    fn search() {
+        let request = Request::new(Query::Search, "johnson");
+        println!("{:?}", find_article(request))
     }
 }

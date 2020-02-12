@@ -8,7 +8,4 @@ fn main() { //todo: redo args to reflect new structure
     let app: App = App::from_yaml(yaml);
     let matches = app.get_matches();
     let query: &str = matches.value_of("query").unwrap();
-
-    let results: Vec<String> = find_article(query);
-    println!("{:?}", results)
 }
