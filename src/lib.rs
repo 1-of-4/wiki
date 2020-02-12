@@ -8,12 +8,12 @@ pub mod interface {
     use serde_json::{Value, json};
     use std::io::Read;
 
-    enum Query {
-        search,
-        content,
+    pub enum Query {
+        Search,
+        Content,
     }
 
-    struct Request {
+    pub struct Request {
         query: Query,
         keywords: String,
     }
@@ -21,13 +21,13 @@ pub mod interface {
     impl Request {
         fn url(&self) -> String {
             match &self.query {
-                Query::search => format!(
+                Query::Search => format!(
                     "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={}&format=json",
                     byte_serialize(self.keywords
                         .as_bytes())
                         .collect::<String>() //convert to valid URL format (" " to "%20", for instance)
                     ),
-                Query::content => String::new(), //todo: content url
+                Query::Content => String::new(), //todo: content url
             }
         }
 
@@ -46,10 +46,11 @@ pub mod interface {
             .as_array()
             .unwrap()
             .iter()
-            .map(|v: &Value| v["title"]
+            .map(|result: &Value| result["title"]
                 .as_str()
                 .unwrap()
-                .to_owned()) //primary culprit if something goes wrong
+                .to_owned() //primary culprit if something goes wrong
+            )
             .collect(); //todo: optimize this, jesus fuck
     }
 

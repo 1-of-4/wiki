@@ -3,7 +3,7 @@ extern crate clap;
 use clap::App;
 use roogle::interface::find_article;
 
-fn main() {
+fn main() { //todo: redo args to reflect new structure
     let yaml = load_yaml!("cli.yml");
     let app: App = App::from_yaml(yaml);
     let matches = app.get_matches();
