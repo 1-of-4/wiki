@@ -1,7 +1,7 @@
 name: wiki
 version: "0.1.0"
 author: Aubrey Landau <aubreylandau@gmail.com>
-about: a Wikipedia article finder, written in Rust
+about: A Wikipedia article finder, written in Rust. Currently only supports en.wikipedia
 args:
   - query:
       required: true
