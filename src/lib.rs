@@ -5,9 +5,9 @@ extern crate serde_json;
 pub mod wiki {
     use reqwest::blocking::get;
     use url::form_urlencoded::byte_serialize;
-    use serde_json::{Value, json};
-    use std::io::Read;
-    use std::fmt::Error;
+    use serde_json::{Value};
+    use std::error::Error;
+    use std::borrow::Borrow;
 
     pub enum Query {
         Search,
@@ -21,42 +21,41 @@ pub mod wiki {
     }
 
     impl Request {
-        pub fn new(query: Query, keywords_: &str) -> Request {
-            let keywords: String = byte_serialize(keywords_.as_bytes())
-                .collect::<String>(); //convert to valid URL format (" " to "%20", for instance)
+        pub fn new(query: Query, keywords: &str) -> Result<Request, Box<dyn Error>> {
+            let keywords: String = byte_serialize(keywords.as_bytes())
+                .collect::<String>(); //convert to valid URL format (" " to "+", for instance)
             let url: String = match query {
                 Query::Search => format!("https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={}&format=json", keywords),
                 Query::Content => format!("https://en.wikipedia.org/w/api.php?action=parse&page={}&prop=text&format=json", keywords),
             };
-            let json: Value = {
-                let mut response: String = String::new();
-                get(&url)
-                    .unwrap()
-                    .read_to_string(&mut response);
-                json!(response)
-            };
-            Request {
+            let json = get(&url)?.json()?;
+            Ok(Request {
                 query,
                 keywords,
-                json
-            }
+                json,
+            })
         }
 
-        fn search(&self) -> Vec<String> { //todo: handle errors
-            return self
-                .json["query"]["search"] //get from endpoint and navigate down to list of results
-                .as_array() //convert to array
-                .unwrap()
-                .iter() //iterate so that we can...
-                .map(|result: &Value| result["title"] //get the title field of each result
-                    .as_str() //convert title to string
-                    .unwrap()
-                    .to_owned() //ensure ownership (primary culprit if something goes wrong)
+        pub fn search(&self) -> Result<Vec<(String, String)>, Box<dyn Error>> {
+            results = self.json["query"]["search"] //get from endpoint and navigate down to list of results
+                .as_array().unwrap() //convert to array
+                .iter()
+                .map(|result: &Value| {(
+                    result["title"]
+                        .as_str()
+                        .unwrap()
+                        .to_string(),
+                    result["snippet"]
+                        .as_str()
+                        .unwrap()
+                        .to_string()
+                    )}
                 )
-                .collect(); //shove all the elements into a nice little vector. todo: optimize this, jesus fuck
+                .collect(); //shove all the elements into a nice little vector
+            Ok(results)
         }
 
-        pub fn fetch(&self) -> Result<Vec<(String, Option<String>)>, Error> {
+        pub fn fetch(&self) -> Result<Vec<(String, Option<String>)>, Box<dyn Error>> {
             unimplemented!()
         }
     }
@@ -65,10 +64,18 @@ pub mod wiki {
 #[cfg(test)]
 mod tests {
     use super::wiki::*;
+    use url::form_urlencoded::byte_serialize;
+
+    #[test]
+    fn url_encode() {
+        let keywords: String = byte_serialize("some words!".as_bytes()).collect();
+        assert_eq!(keywords, "some+words%21")
+    }
 
     #[test]
     fn search() {
-        let request = Request::new(Query::Search, "johnson");
-        println!("{:?}", find_article(request))
+        let request = Request::new(Query::Search, "johnson").unwrap();
+        let results = request.search().unwrap();
+        assert_eq!(results[0], ("Johnson", r#"<span class=\"searchmatch\">Johnson</span> is a surname of English, Scottish origin. The name itself is a patronym of the given name John, literally meaning &quot;son of John&quot;. The name John"#))
     }
 }

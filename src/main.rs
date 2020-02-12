@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate clap;
 use clap::App;
-use roogle::wiki::find_article;
+use roogle::wiki::*;
 
 fn main() { //todo: redo args to reflect new structure
     let yaml = load_yaml!("cli.yml");
