@@ -28,14 +28,11 @@ pub mod interface {
         }
 
         fn url(&self) -> String {
-            match &self.query {
-                Query::Search => format!(
-                    "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={}&format=json",
-                    byte_serialize(self.keywords
-                        .as_bytes())
-                        .collect::<String>() //convert to valid URL format (" " to "%20", for instance)
-                    ),
-                Query::Content => String::new(), //todo: content url
+            let formatted = byte_serialize(self.keywords.as_bytes())
+                .collect::<String>(); //convert to valid URL format (" " to "%20", for instance)
+            match self.query {
+                Query::Search => format!("https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={}&format=json", formatted),
+                Query::Content => format!("https://en.wikipedia.org/w/api.php?action=parse&page={}&prop=text&format=json", formatted),
             }
         }
 
@@ -48,18 +45,18 @@ pub mod interface {
         }
     }
 
-    pub fn find_article(request: Request) -> Vec<String> { //todo: return a Result<Vector<String>, ?>
+    pub fn search(request: Request) -> Vec<String> { //todo: return a Result<Vector<String>, ?>
         return request
-            .get_json()["query"]["search"]
-            .as_array()
+            .get_json()["query"]["search"] //get from endpoint and navigate down to list of results
+            .as_array() //convert to array
             .unwrap()
-            .iter()
-            .map(|result: &Value| result["title"]
-                .as_str()
+            .iter() //iterate so that we can...
+            .map(|result: &Value| result["title"] //get the title field of each result
+                .as_str() //convert title to string
                 .unwrap()
-                .to_owned() //primary culprit if something goes wrong
+                .to_owned() //ensure ownership (primary culprit if something goes wrong)
             )
-            .collect(); //todo: optimize this, jesus fuck
+            .collect(); //shove all the elements into a nice little vector. todo: optimize this, jesus fuck
     }
 
     pub fn fetch_contents(request: Request) -> Option<String> {
