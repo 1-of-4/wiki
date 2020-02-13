@@ -7,7 +7,7 @@ pub mod wiki {
     use url::form_urlencoded::byte_serialize;
     use serde_json::{Value};
     use std::error::Error;
-    use std::borrow::Borrow;
+    type GenErr = Box<dyn Error> ;
 
     pub enum Query {
         Search,
@@ -21,7 +21,7 @@ pub mod wiki {
     }
 
     impl Request {
-        pub fn new(query: Query, keywords: &str) -> Result<Request, Box<dyn Error>> {
+        pub fn new(query: Query, keywords: &str) -> Result<Request, GenErr> {
             let keywords: String = byte_serialize(keywords.as_bytes())
                 .collect::<String>(); //convert to valid URL format (" " to "+", for instance)
             let url: String = match query {
@@ -36,26 +36,20 @@ pub mod wiki {
             })
         }
 
-        pub fn search(&self) -> Result<Vec<(String, String)>, Box<dyn Error>> {
-            results = self.json["query"]["search"] //get from endpoint and navigate down to list of results
+        pub fn search(&self) -> Result<Vec<(String, String)>, GenErr> {
+            let results = self.json["query"]["search"] //get from endpoint and navigate down to list of results
                 .as_array().unwrap() //convert to array
                 .iter()
                 .map(|result: &Value| {(
-                    result["title"]
-                        .as_str()
-                        .unwrap()
-                        .to_string(),
-                    result["snippet"]
-                        .as_str()
-                        .unwrap()
-                        .to_string()
+                    result["title"].as_str().unwrap().to_string(),
+                    result["snippet"].as_str().unwrap().to_string()
                     )}
                 )
                 .collect(); //shove all the elements into a nice little vector
             Ok(results)
         }
 
-        pub fn fetch(&self) -> Result<Vec<(String, Option<String>)>, Box<dyn Error>> {
+        pub fn fetch(&self) -> Result<Vec<(String, Option<String>)>, GenErr> {
             unimplemented!()
         }
     }
@@ -75,7 +69,7 @@ mod tests {
     #[test]
     fn search() {
         let request = Request::new(Query::Search, "johnson").unwrap();
-        let results = request.search().unwrap();
+        let results = request.search()?;
         assert_eq!(results[0], ("Johnson", r#"<span class=\"searchmatch\">Johnson</span> is a surname of English, Scottish origin. The name itself is a patronym of the given name John, literally meaning &quot;son of John&quot;. The name John"#))
     }
 }

@@ -1,7 +1,7 @@
 name: wiki
 version: "0.1.0"
 author: Aubrey Landau <aubreylandau@gmail.com>
-about: A Wikipedia article searcher and downloader, written in Rust. Currently only supports english Wikipedia.
+about: A Wikipedia article searcher, viewer, and downloader, written in Rust. Currently only supports english Wikipedia.
 args:
   - query:
       required: true
