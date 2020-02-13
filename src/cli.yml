@@ -2,19 +2,41 @@ name: wiki
 version: "0.1.0"
 author: Aubrey Landau <aubreylandau@gmail.com>
 about: A Wikipedia article searcher, viewer, and downloader, written in Rust. Currently only supports english Wikipedia.
-args:
-  - query:
-      required: true
-      takes_value: true
-      index: 2
-      help: the topic you want wikipedia to fetch an article on
-  - similar:
-      required_unless: get
-      index: 1
-      short: s
-      help: list pages with a similar name
-  - get:
-      required_unless: pages
-      index: 1
-      short: g
-      help: get a page with a known name
+subcommands:
+  - search:
+      about: searches wikipedia for articles matching a given set of keywords
+      args:
+        - keywords:
+            help: a space-delimited list of keywords you want to search wikipedia for
+            index: 1
+            min_values: 1
+            required: true
+        - snippet:
+            help: additionally display a snippet of each article
+            short: s
+            long: snippet
+        - limit:
+            help: a maximum number of articles to fetch
+            takes_value: true
+            short: l
+            long: limit
+  - view:
+      about: read an article matching a title
+      args:
+        - title:
+            help: the title of the article
+            index: 1
+            min_values: 1
+            required: true
+  - download:
+      about: download an article
+      args:
+        - title:
+            help: the title of the article
+            index: 1
+            min_values: 1
+            required: true
+        - path:
+            help: the filepath you want to save the article to
+            index: 2
+            required: true
