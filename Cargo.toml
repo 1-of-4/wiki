@@ -1,5 +1,5 @@
 [package]
-name = "roogle"
+name = "wiki"
 version = "0.1.0"
 authors = ["arl5705 <arl5705@rit.edu>"]
 edition = "2018"
