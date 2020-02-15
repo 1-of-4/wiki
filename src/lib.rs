@@ -16,7 +16,6 @@ pub mod wiki {
     }
 
     pub struct Request {
-        query: Query,
         url: String,
     }
 
@@ -28,11 +27,8 @@ pub mod wiki {
                 Query::Search => "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={}&format=json",
                 Query::View => "https://en.wikipedia.org/w/api.php?action=parse&page={}&prop=text&format=json",
                 Query::Download => "https://en.wikipedia.org/w/index.php?title={}&action=raw"
-            }
-                .to_string()
-                .replace("{}", keywords.as_ref()); //kinda jank but format! doesnt work with &str
+            }.replace("{}", keywords.as_ref()); //kinda jank but format! doesnt work with &str
             Request {
-                query,
                 url
             }
         }
@@ -44,7 +40,7 @@ pub mod wiki {
             )
         }
 
-        pub fn search(&self, snippet: bool) -> Safe<Vec<(String, Option<String>)>> { //todo: deal with html
+        pub fn search(&self) -> Safe<Vec<(String, String)>> {
             let results = self.json()?["query"]["search"] //get from endpoint and navigate down to list of results
                 .as_array().unwrap() //convert to array
                 .iter()
@@ -53,14 +49,12 @@ pub mod wiki {
                         .as_str()
                         .unwrap_or("No Title")
                         .to_string(),
-                    match snippet {
-                        true => Some(result["snippet"]
-                            .as_str()
-                            .unwrap_or("No Snippet")
-                            .to_string()
-                        ),
-                        false => None
-                    }
+                    result["snippet"]
+                        .as_str()
+                        .unwrap_or("No Snippet")
+                        .replace("<span class=\"searchmatch\">", "")
+                        .replace(r#"</span>"#, "")
+                        .replace(r#"&quot;"#, "\"")
                 )})
                 .collect(); //shove all the elements into a nice little vector
             Ok(results)
@@ -89,7 +83,10 @@ mod tests {
 
     #[test]
     fn search() {
-        let results = Request::new(Query::Search, "ricardo").search(false).unwrap();
-        assert_eq!(results[1], (String::from("David Ricardo"), None));
+        let results = Request::new(Query::Search, "ricardo").search().unwrap();
+        assert_eq!(results[1], (
+            String::from("David Ricardo"),
+            String::from("David Ricardo (18 April 1772 – 11 September 1823) was a British political economist, one of the most influential of the classical economists along with")
+        ));
     }
 }
