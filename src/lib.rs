@@ -1,11 +1,13 @@
 extern crate reqwest;
 extern crate url;
 extern crate serde_json;
+extern crate html2text;
 
 pub mod wiki {
     use reqwest::blocking::get;
     use url::form_urlencoded::byte_serialize;
-    use serde_json::{Value};
+    use serde_json::Value;
+    use html2text::from_read;
 
     type Safe<T> = Result<T, Box<dyn std::error::Error>>;
 
@@ -44,18 +46,18 @@ pub mod wiki {
             let results = self.json()?["query"]["search"] //get from endpoint and navigate down to list of results
                 .as_array().unwrap() //convert to array
                 .iter()
-                .map(|result: &Value| {(
-                    result["title"]
-                        .as_str()
-                        .unwrap_or("No Title")
-                        .to_string(),
-                    result["snippet"]
-                        .as_str()
-                        .unwrap_or("No Snippet")
-                        .replace("<span class=\"searchmatch\">", "")
-                        .replace(r#"</span>"#, "")
-                        .replace(r#"&quot;"#, "\"")
-                )})
+                .map(|result| {
+                    (
+                        from_read(result["title"]
+                            .as_str()
+                            .unwrap()
+                            .as_bytes(), 30),
+                        from_read(result["snippet"]
+                            .as_str()
+                            .unwrap()
+                            .as_bytes(), 80),
+                    )
+                })
                 .collect(); //shove all the elements into a nice little vector
             Ok(results)
         }

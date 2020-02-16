@@ -15,14 +15,14 @@ fn main() {
                     let request = Request::new(Query::Search, keywords);
                     let response = request.search().unwrap();
                     match matches.is_present("snippet") {
-                        true => for (result, snippet) in response { println!("{}: {}\n", result, snippet) }
-                        false => for (result, _) in response { println!("{}\n", result) }
+                        true => for (result, snippet) in response { println!("{}{}", result, snippet) }
+                        false => for (result, _) in response { println!("{}", result) }
                     }
-                } else { panic!("You must enter some keywords.") }
+                } else { println!("{}", matches.usage()) }
             }
             _ => unimplemented!()
         };
     } else {
-        unimplemented!()
+        unimplemented!() //todo: implement non-subcommand stuff
     }
 }
