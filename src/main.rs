@@ -18,7 +18,16 @@ fn main() {
                         true => for (result, snippet) in response { println!("{}{}", result, snippet) }
                         false => for (result, _) in response { println!("{}", result) }
                     }
-                } else { println!("{}", matches.usage()) }
+                } else {
+                    println!("{}", matches.usage())
+                }
+            }
+            "view" => {
+                if let Some(title) = matches.value_of("title") {
+                    let request = Request::new(Query::View, title);
+                    let response = request.view();
+                    println!("{}", response);
+                }
             }
             _ => unimplemented!()
         };
