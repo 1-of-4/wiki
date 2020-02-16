@@ -9,8 +9,6 @@ pub mod wiki {
     use serde_json::Value;
     use html2text::from_read;
 
-    type Safe<T> = Result<T, Box<dyn std::error::Error>>;
-
     pub enum Query {
         Search,
         View,
@@ -18,6 +16,7 @@ pub mod wiki {
     }
 
     pub struct Request {
+        keywords: String,
         url: String,
     }
 
@@ -31,42 +30,51 @@ pub mod wiki {
                 Query::Download => "https://en.wikipedia.org/w/index.php?title={}&action=raw"
             }.replace("{}", keywords.as_ref()); //kinda jank but format! doesnt work with &str
             Request {
-                url
+                keywords,
+                url,
             }
         }
 
-        fn json(&self) -> Safe<Value> {
-            Ok(
-                get(&self.url)?
-                    .json()?
-            )
+        fn json(&self) -> Value {
+            get(&self.url)
+                .unwrap()
+                .json()
+                .unwrap()
         }
 
-        pub fn search(&self) -> Safe<Vec<(String, String)>> {
-            let results = self.json()?["query"]["search"] //get from endpoint and navigate down to list of results
+        pub fn search(&self) -> Vec<(String, String)> {
+            let results = self.json()["query"]["search"] //get from endpoint and navigate down to list of results
                 .as_array().unwrap() //convert to array
                 .iter()
                 .map(|result| {
                     (
                         from_read(result["title"]
-                            .as_str()
-                            .unwrap()
-                            .as_bytes(), 30),
+                                      .as_str()
+                                      .unwrap()
+                                      .as_bytes(), 30),
                         from_read(result["snippet"]
-                            .as_str()
-                            .unwrap()
-                            .as_bytes(), 80),
+                                      .as_str()
+                                      .unwrap()
+                                      .as_bytes(), 80),
                     )
                 })
                 .collect(); //shove all the elements into a nice little vector
-            Ok(results)
+            results
         }
 
-        pub fn view(&self) -> Safe<String> {
-            unimplemented!()
+        pub fn view(&self) -> String {
+            if let Some(results) = self.json().pointer("/parse/text/*") {
+                from_read(results
+                              .as_str()
+                              .unwrap()
+                              .as_bytes(),
+                          120)
+            } else {
+                format!("No article found with name \"{}\"", self.keywords)
+            }
         }
 
-        pub fn download(&self) -> Safe<String> {
+        pub fn download(&self) -> String {
             unimplemented!()
         }
     }
@@ -85,10 +93,17 @@ mod tests {
 
     #[test]
     fn search() {
-        let results = Request::new(Query::Search, "ricardo").search().unwrap();
+        let results = Request::new(Query::Search, "ricardo").search();
         assert_eq!(results[1], (
-            String::from("David Ricardo"),
-            String::from("David Ricardo (18 April 1772 – 11 September 1823) was a British political economist, one of the most influential of the classical economists along with")
+            String::from("David Ricardo\n"),
+            String::from("David Ricardo (18 April 1772 – 11 September 1823) was a British political\neconomist, one of the most influential of the classical economists along with\n")
         ));
+    }
+
+    #[test]
+    fn view() {
+        let request = Request::new(Query::View, "animal");
+        let results = request.view();
+        assert_ne!(String::from("No article found with name \"animal\""), results)
     }
 }

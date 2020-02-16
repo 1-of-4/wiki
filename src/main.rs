@@ -13,7 +13,7 @@ fn main() {
             "search" => {
                 if let Some(keywords) = matches.value_of("keywords") {
                     let request = Request::new(Query::Search, keywords);
-                    let response = request.search().unwrap();
+                    let response = request.search();
                     match matches.is_present("snippet") {
                         true => for (result, snippet) in response { println!("{}{}", result, snippet) }
                         false => for (result, _) in response { println!("{}", result) }
