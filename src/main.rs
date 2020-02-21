@@ -31,7 +31,6 @@ fn main() {
                     println!("{}", matches.usage())
                 }
             }
-            "download" => unimplemented!(),
             _ => unimplemented!()
         };
     } else {
