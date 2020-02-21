@@ -27,8 +27,11 @@ fn main() {
                     let request = Request::new(Query::View, title);
                     let response = request.view();
                     println!("{}", response);
+                } else {
+                    println!("{}", matches.usage())
                 }
             }
+            "download" => unimplemented!(),
             _ => unimplemented!()
         };
     } else {

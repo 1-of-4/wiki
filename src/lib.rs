@@ -22,11 +22,11 @@ pub mod wiki {
 
     impl Request {
         pub fn new(query: Query, keywords: &str) -> Request {
-            let keywords = byte_serialize(keywords.as_bytes())
-                .collect::<String>(); //convert to valid URL format (" " to "+", for instance)
+            let keywords = byte_serialize(keywords.as_bytes()) //convert to valid URL format (" " to "+", for instance)
+                .collect::<String>(); //the API *should* do this for us, but it doesn't hurt to make sure
             let url = match query {
                 Query::Search => "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={}&format=json",
-                Query::View => "https://en.wikipedia.org/w/api.php?action=parse&page={}&prop=text&format=json",
+                Query::View => "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&titles={}&redirects",
                 Query::Download => "https://en.wikipedia.org/w/index.php?title={}&action=raw"
             }.replace("{}", keywords.as_ref()); //kinda jank but format! doesnt work with &str
             Request {
@@ -36,10 +36,10 @@ pub mod wiki {
         }
 
         fn json(&self) -> Value {
-            get(&self.url)
-                .unwrap()
-                .json()
-                .unwrap()
+            get(&self.url) //Option<???>
+                .unwrap() //http???
+                .json() //Option<Value>
+                .unwrap() //Value
         }
 
         pub fn search(&self) -> Vec<(String, String)> {
@@ -51,7 +51,7 @@ pub mod wiki {
                         from_read(result["title"]
                                       .as_str()
                                       .unwrap()
-                                      .as_bytes(), 30),
+                                      .as_bytes(), 80),
                         from_read(result["snippet"]
                                       .as_str()
                                       .unwrap()
@@ -63,8 +63,9 @@ pub mod wiki {
         }
 
         pub fn view(&self) -> String {
-            if let Some(results) = self.json().pointer("/parse/text/*") {
-                from_read(results
+            let json = &self.json()["query"]["pages"];
+            if let Some(id) = json.as_object().unwrap().keys().nth(0) {
+                from_read(json[id]["extract"]
                               .as_str()
                               .unwrap()
                               .as_bytes(),
