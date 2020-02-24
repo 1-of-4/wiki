@@ -15,7 +15,7 @@ subcommands:
             short: s
             long: snippet
         - limit:
-            help: A maximum number of articles to fetch
+            help: A maximum number of articles to fetch. Defaults to 10.
             takes_value: true
             short: l
             long: limit

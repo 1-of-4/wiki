@@ -21,14 +21,17 @@ pub mod wiki {
     }
 
     impl Request {
-        pub fn new(query: Query, keywords: &str) -> Request {
-            let keywords = byte_serialize(keywords.as_bytes()) //convert to valid URL format (" " to "+", for instance)
+        pub fn new(query: Query, kw: &str, arg: Option<&str>) -> Request {
+            let keywords = byte_serialize(kw.as_bytes()) //convert to valid URL format (" " to "+", for instance)
                 .collect::<String>(); //the API *should* do this for us, but it doesn't hurt to make sure
-            let url = match query {
-                Query::Search => "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={}&format=json",
+            let mut url = match query {
+                Query::Search => "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={}&srlimit=[]&format=json",
                 Query::View => "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&format=json&titles={}&redirects",
                 Query::Download => "https://en.wikipedia.org/w/index.php?title={}&action=raw"
             }.replace("{}", keywords.as_ref()); //kinda jank but format! doesnt work with &str
+            if let Some(argument) = arg {
+                url = url.replace("[]", argument);
+            }
             Request {
                 keywords,
                 url,

@@ -12,7 +12,15 @@ fn main() {
         match subcommand {
             "search" => {
                 if let Some(keywords) = matches.value_of("keywords") {
-                    let request = Request::new(Query::Search, keywords);
+                    let mut limit = "10";
+                    if let Some(lim) = matches.value_of("limit") {
+                        if lim.parse::<u32>().is_ok() {
+                            limit = lim;
+                        } else {
+                            println!("Invalid limit, defaulting to 10.\n--------------------------------\n");
+                        }
+                    }
+                    let request = Request::new(Query::Search, keywords, Some(limit));
                     let response = request.search();
                     match matches.is_present("snippet") {
                         true => for (result, snippet) in response { println!("{}{}", result, snippet) }
@@ -23,8 +31,11 @@ fn main() {
                 }
             }
             "view" => {
-                if let Some(title) = matches.value_of("title") {
-                    let request = Request::new(Query::View, title);
+                if let Some(title) = matches.values_of("title") {
+                    let title = title
+                        .collect::<Vec<&str>>()
+                        .join(" ");
+                    let request = Request::new(Query::View, &title, None);
                     let response = request.view();
                     println!("{}", response);
                 } else {
